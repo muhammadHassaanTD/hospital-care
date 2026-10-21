@@ -15,9 +15,9 @@ Code: `backend/apps/resources/`, `backend/apps/audit/`.
 | `status` | Declared by each subclass, with its own choices |
 | `machine` | Class attribute: the subclass's `StateMachine` |
 
-Beds (`hospitals.Bed`) and blood units (`blood.BloodUnit`) inherit it from Sprint 2. Equipment, operating rooms and
-ambulances will inherit it in Sprints 4 and 8. A bed's `hospital` always equals its ward's hospital
-(`Bed.save()`).
+Beds (`hospitals.Bed`) and blood units (`blood.BloodUnit`) inherit it from Sprint 2. Equipment
+(`resources.Equipment`) inherits it from Sprint 4. Operating rooms and ambulances will inherit it in later
+sprints. A bed's `hospital` always equals its ward's hospital (`Bed.save()`).
 
 `hospital` is nullable only because Sprint 1 rows had none. `seed_demo` backfills them, the API always sets it,
 and a later migration can make it required once every environment has re-run the seed.
@@ -133,13 +133,27 @@ stateDiagram-v2
 ```
 
 **Ambulance trip** (#51): dispatched → en route → arrived → completed.
-**Equipment** (#27): available ↔ in use; available → maintenance → available; any → out of service.
+**Equipment** (#26, #27): `EQUIPMENT_LIFECYCLE` in `resources/models.py`. The registry creates a machine as
+`available`. Staff change status with `POST /equipment/<id>/actions/`. Matching (`?forMatching=1`,
+`Equipment.objects.for_matching()`) is offered only `available` machines, so maintenance is excluded.
+
+```mermaid
+stateDiagram-v2
+    available --> inUse: startUse
+    inUse --> available: finishUse
+    available --> maintenance: startMaintenance
+    maintenance --> available: finishMaintenance
+    available --> outOfService: outOfService
+    inUse --> outOfService: outOfService
+    maintenance --> outOfService: outOfService
+```
 
 ## Own-hospital rule (story 1.2)
 
 `apps.accounts.permissions.may_change(user, resource)`: admins may change any hospital's resources. Everyone else
 may change only resources whose `hospital` is their own (`User.hospital`). Otherwise the API answers **403**.
-Reads are limited to the user's hospital where a module lists resources (the bed board and the blood list).
+Reads are limited to the user's hospital where a module lists resources (the bed board, the blood list and the
+equipment list).
 
 ## Audit log (story 8.1, ADR-7)
 
@@ -157,7 +171,7 @@ raise. No API endpoint exposes the log, and Django admin shows it read-only. Sea
 (#56).
 
 Logged so far: `user.role_changed`, `hospital.created`/`updated`, `department|ward|location.created`/`deleted`,
-`bed.status_changed`.
+`bed.status_changed`, `equipment.registered`.
 
 **ADR-7 (proposed):** the audit log doubles as each resource's status history, so there's no separate history
 table. A resource's history is `AuditLog.objects.filter(target_type=…, target_id=…)`, served by an index on

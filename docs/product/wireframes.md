@@ -16,6 +16,7 @@ modules the signed-in role can open (`ACCESS` in [api-contracts.md](../architect
 | Sign in / sign up | `/login`, `/signup` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Overview | `/staff` | ✓ | ✓ | ✓ | ✓ | ✓ | – |
 | Beds | `/staff/beds` | edit | view | edit | – | – | – |
+| Equipment | `/staff/equipment` | edit | view | edit | – | – | – |
 | Blood bank | `/staff/blood` | edit | view | – | edit | – | – |
 | Pharmacy | `/staff/pharmacy` | edit | view | view | – | edit | – |
 | Hospitals list | `/staff/hospitals` | edit | view | view | view | view | – |

@@ -29,7 +29,12 @@ export function sampleHospitals(): HospitalDetail[] {
         { id: 21, code: 'icu', name: 'ICU', kind: 'Intensive care', departmentId: 11, bedCount: 10 },
         { id: 22, code: 'h1-step-down', name: 'Step-down', kind: 'High dependency', departmentId: null, bedCount: 0 },
       ],
-      locations: [{ id: 31, name: 'Blood fridge 1' }],
+      locations: [
+        { id: 31, name: 'Blood fridge 1' },
+        { id: 32, name: 'ICU equipment bay' },
+        { id: 33, name: 'Emergency bay' },
+        { id: 34, name: 'Dialysis unit' },
+      ],
     },
     {
       id: 2,

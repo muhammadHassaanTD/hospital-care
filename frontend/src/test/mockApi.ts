@@ -2,12 +2,14 @@ import { vi } from 'vitest'
 import type { User } from '../api/auth'
 import type { BedAction, BedBoard } from '../api/beds'
 import { COMPONENTS, type BloodUnitInput } from '../api/blood'
+import type { EquipmentInput } from '../api/equipment'
 import type { HospitalInput, StructureKind } from '../api/hospitals'
 import type { PublicStatus } from '../api/publicStatus'
 import type { UserSummary } from '../api/users'
 import { applyAction } from '../features/beds/beds'
 import { canEdit, canSee, type Module, type Role } from '../features/staff/roles'
 import { sampleBedBoard } from './fixtures/beds'
+import { sampleEquipment } from './fixtures/equipment'
 import { sampleBloodUnits } from './fixtures/blood'
 import { sampleCapabilities, sampleHospitals, sampleUsers } from './fixtures/hospitals'
 import { sampleMedicines } from './fixtures/pharmacy'
@@ -95,6 +97,7 @@ export function mockStaffApi({ role, erDown = false, board: customBoard, publicS
   const now = new Date()
   const board = customBoard ?? sampleBedBoard(now)
   const units = sampleBloodUnits(now)
+  const equipment = sampleEquipment()
   const hospitals = sampleHospitals()
   const users = sampleUsers()
   const gate = (module: Module, reply: () => Reply): Route => () =>
@@ -133,6 +136,24 @@ export function mockStaffApi({ role, erDown = false, board: customBoard, publicS
       return { status: 201, body: created }
     }),
     'GET /pharmacy/stock/': gate('pharmacy', () => ok(sampleMedicines(now))),
+    'GET /equipment/': gate('equipment', () => ok(equipment)),
+    'POST /equipment/': edit('equipment', ({ body }) => {
+      const input = body as EquipmentInput
+      if (equipment.some((item) => item.id.toLowerCase() === input.id.toLowerCase())) {
+        return fail(400, { id: ['Equipment with this identifier already exists.'] })
+      }
+      const location = hospitals.find((hospital) => hospital.id === 1)?.locations.find((item) => item.id === input.locationId)
+      if (!location) return fail(400, { locationId: ['Choose a location at your hospital.'] })
+      const created = {
+        id: input.id,
+        type: input.type,
+        location: location.name,
+        locationId: location.id,
+        status: 'available' as const,
+      }
+      equipment.push(created)
+      return { status: 201, body: created }
+    }),
     'POST /beds/:id/actions/': ({ params, body }) => {
       if (!role || role === 'patient' || !canEdit(role, 'beds')) return fail(403)
       const index = board.beds.findIndex((b) => b.id === params.id)

@@ -65,7 +65,7 @@ describe('StaffLayout', () => {
     mockStaffApi({ role: 'admin' })
     renderAt('/staff/beds')
     expect(await screen.findByText('beds content')).toBeInTheDocument()
-    expect(navLinks()).toEqual(['Overview', 'Beds', 'Blood bank', 'Pharmacy', 'Hospitals', 'Users and roles'])
+    expect(navLinks()).toEqual(['Overview', 'Beds', 'Equipment', 'Blood bank', 'Pharmacy', 'Hospitals', 'Users and roles'])
     expect(screen.getByRole('link', { name: 'Beds' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByText('Sadia Admin')).toBeInTheDocument()
   })
@@ -78,6 +78,7 @@ describe('StaffLayout', () => {
     expect(requested(fetchMock)).toContain('/api/pharmacy/stock/')
     expect(requested(fetchMock)).not.toContain('/api/beds/')
     expect(requested(fetchMock)).not.toContain('/api/blood/units/')
+    expect(requested(fetchMock)).not.toContain('/api/equipment/')
   })
 
   it('blocks a page the role cannot open', async () => {

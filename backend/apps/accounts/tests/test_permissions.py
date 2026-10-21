@@ -34,6 +34,8 @@ def test_every_api_endpoint_declares_its_permission_classes():
 # (module, method, url name, url args, body) for one read and one write per module.
 ENDPOINTS = [
     ("beds", "get", "bed-board", [], None),
+    ("equipment", "get", "equipment-list", [], None),
+    ("equipment", "post", "equipment-list", [], {}),
     ("blood", "get", "blood-units", [], None),
     ("pharmacy", "get", "pharmacy-stock", [], None),
     ("hospitals", "get", "hospital-list", [], None),

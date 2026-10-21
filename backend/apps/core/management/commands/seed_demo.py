@@ -31,6 +31,7 @@ from apps.hospitals.models import (
     Ward,
 )
 from apps.pharmacy.models import Batch, Medicine
+from apps.resources.models import Equipment, EquipmentStatus, EquipmentType
 
 DEMO_PASSWORD = "CityCare-demo-1"
 DEMO_USERS = [
@@ -82,6 +83,9 @@ HOSPITALS = [
             "Plasma freezer B",
             "Platelet agitator",
             "Main store",
+            "ICU equipment bay",
+            "Emergency bay",
+            "Dialysis unit",
         ],
         WARDS,
     ),
@@ -133,6 +137,22 @@ DOCTORS = [
     ("Dr. Hamza Butt", "Orthopaedics", "15:00", "21:00"),
     ("Dr. Fatima Zaidi", "Gynaecology", "08:00", "14:00"),
     ("Dr. Rabia Anwar", "Gynaecology", "20:00", "08:00"),
+]
+
+# code, type, status, storage location name (CityCare General only)
+EQUIPMENT = [
+    ("VENT-01", EquipmentType.VENTILATOR, EquipmentStatus.AVAILABLE, "ICU equipment bay"),
+    ("VENT-02", EquipmentType.VENTILATOR, EquipmentStatus.IN_USE, "ICU equipment bay"),
+    ("VENT-03", EquipmentType.VENTILATOR, EquipmentStatus.MAINTENANCE, "ICU equipment bay"),
+    ("VENT-04", EquipmentType.VENTILATOR, EquipmentStatus.OUT_OF_SERVICE, "Emergency bay"),
+    ("MON-01", EquipmentType.MONITOR, EquipmentStatus.AVAILABLE, "ICU equipment bay"),
+    ("MON-02", EquipmentType.MONITOR, EquipmentStatus.IN_USE, "Emergency bay"),
+    ("MON-03", EquipmentType.MONITOR, EquipmentStatus.AVAILABLE, "Emergency bay"),
+    ("MON-04", EquipmentType.MONITOR, EquipmentStatus.MAINTENANCE, "Emergency bay"),
+    ("DEF-01", EquipmentType.DEFIBRILLATOR, EquipmentStatus.AVAILABLE, "Emergency bay"),
+    ("DEF-02", EquipmentType.DEFIBRILLATOR, EquipmentStatus.IN_USE, "ICU equipment bay"),
+    ("DIAL-01", EquipmentType.DIALYSIS, EquipmentStatus.AVAILABLE, "Dialysis unit"),
+    ("DIAL-02", EquipmentType.DIALYSIS, EquipmentStatus.OUT_OF_SERVICE, "Dialysis unit"),
 ]
 
 # component: (shelf life days, storage locations, share of stock)
@@ -501,6 +521,7 @@ class Command(BaseCommand):
         now = timezone.now()
         if reset:
             models = (
+                Equipment,
                 Bed,
                 BloodUnit,
                 Ward,
@@ -522,6 +543,8 @@ class Command(BaseCommand):
         main = hospitals[0]
 
         self.seed_users(main)
+        if not Equipment.objects.exists():
+            self.seed_equipment(main)
         if not BloodUnit.objects.exists():
             self.seed_blood(rand, now, main)
         BloodUnit.objects.filter(hospital=None).update(hospital=main)
@@ -543,6 +566,20 @@ class Command(BaseCommand):
         self.stdout.write(f"Demo logins (password for all: {DEMO_PASSWORD}):")
         for email, *_, role in DEMO_USERS:
             self.stdout.write(f"  {role:<11} {email}")
+
+    def seed_equipment(self, hospital: Hospital):
+        """Critical equipment at `hospital`, so the registry has every type and status to filter."""
+        storage = {loc.name: loc for loc in StorageLocation.objects.filter(hospital=hospital)}
+        Equipment.objects.bulk_create(
+            Equipment(
+                code=code,
+                type=type_,
+                status=status,
+                hospital=hospital,
+                storage_location=storage[location],
+            )
+            for code, type_, status, location in EQUIPMENT
+        )
 
     def seed_users(self, hospital: Hospital):
         """One login per role; staff work at `hospital`."""

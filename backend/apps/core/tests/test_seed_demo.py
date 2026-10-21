@@ -5,12 +5,13 @@ from apps.accounts.models import Role, User
 from apps.blood.models import BloodUnit
 from apps.hospitals.models import Bed, BedType, Department, Hospital, StorageLocation, Ward
 from apps.pharmacy.models import Medicine
+from apps.resources.models import Equipment, EquipmentStatus, EquipmentType
 
 pytestmark = pytest.mark.django_db
 
 
 def counts():
-    models = (Hospital, Department, Ward, StorageLocation, Bed, BloodUnit, Medicine, User)
+    models = (Hospital, Department, Ward, StorageLocation, Bed, BloodUnit, Medicine, User, Equipment)
     return {model.__name__: model.objects.count() for model in models}
 
 
@@ -22,11 +23,12 @@ def test_seed_demo_is_repeatable():
         "Hospital": 3,
         "Department": 10,
         "Ward": 12,
-        "StorageLocation": 10,
+        "StorageLocation": 13,
         "Bed": 164,
         "BloodUnit": 320,
         "Medicine": 23,
         "User": 6,
+        "Equipment": 12,
     }
     assert counts() == first
 
@@ -39,6 +41,9 @@ def test_every_hospital_has_structure_and_resources():
         assert Bed.objects.filter(hospital=hospital).exists()
     assert not Bed.objects.filter(hospital=None).exists()
     assert not BloodUnit.objects.filter(hospital=None).exists()
+    assert set(Equipment.objects.values_list("type", flat=True)) == set(EquipmentType.values)
+    assert set(Equipment.objects.values_list("status", flat=True)) == set(EquipmentStatus.values)
+    assert Equipment.objects.filter(storage_location=None).count() == 0
     assert not BloodUnit.objects.filter(storage_location=None).exists()
 
 

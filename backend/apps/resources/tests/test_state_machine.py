@@ -7,7 +7,7 @@ from apps.accounts.models import Role
 from apps.audit.models import AuditLog
 from apps.blood.models import BLOOD_UNIT_LIFECYCLE, BloodUnit, UnitStatus
 from apps.hospitals.models import BED_LIFECYCLE, Bed, BedStatus, Ward
-from apps.resources.models import Resource
+from apps.resources.models import EQUIPMENT_LIFECYCLE, Equipment, EquipmentStatus, Resource
 from apps.resources.services import change_status
 from apps.resources.state_machine import StateMachine, TransitionNotAllowed
 
@@ -15,8 +15,8 @@ B, U = BedStatus, UnitStatus
 
 
 def test_bed_and_blood_unit_build_on_the_shared_resource_model():
-    assert issubclass(Bed, Resource) and issubclass(BloodUnit, Resource)
-    for model in (Bed, BloodUnit):
+    assert issubclass(Bed, Resource) and issubclass(BloodUnit, Resource) and issubclass(Equipment, Resource)
+    for model in (Bed, BloodUnit, Equipment):
         names = {f.name for f in model._meta.fields}
         assert {"hospital", "storage_location", "status", "status_since"} <= names
         assert isinstance(model.machine, StateMachine)
@@ -42,11 +42,27 @@ UNIT_MOVES = [
     (U.RESERVED, "expire", U.EXPIRED),
 ]
 
+S = EquipmentStatus
+
+EQUIPMENT_MOVES = [
+    (S.AVAILABLE, "startUse", S.IN_USE),
+    (S.IN_USE, "finishUse", S.AVAILABLE),
+    (S.AVAILABLE, "startMaintenance", S.MAINTENANCE),
+    (S.MAINTENANCE, "finishMaintenance", S.AVAILABLE),
+    (S.AVAILABLE, "outOfService", S.OUT_OF_SERVICE),
+    (S.IN_USE, "outOfService", S.OUT_OF_SERVICE),
+    (S.MAINTENANCE, "outOfService", S.OUT_OF_SERVICE),
+]
+
 
 @pytest.mark.parametrize(
     ("machine", "statuses", "moves"),
-    [(BED_LIFECYCLE, BedStatus, BED_MOVES), (BLOOD_UNIT_LIFECYCLE, UnitStatus, UNIT_MOVES)],
-    ids=["bed", "blood unit"],
+    [
+        (BED_LIFECYCLE, BedStatus, BED_MOVES),
+        (BLOOD_UNIT_LIFECYCLE, UnitStatus, UNIT_MOVES),
+        (EQUIPMENT_LIFECYCLE, EquipmentStatus, EQUIPMENT_MOVES),
+    ],
+    ids=["bed", "blood unit", "equipment"],
 )
 def test_every_status_action_pair_is_allowed_or_refused_exactly_as_listed(machine, statuses, moves):
     allowed = {(start, action): end for start, action, end in moves}

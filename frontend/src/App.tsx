@@ -7,6 +7,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import SignupPage from './pages/SignupPage'
 import BedsPage from './pages/staff/BedsPage'
 import BloodPage from './pages/staff/BloodPage'
+import EquipmentPage from './pages/staff/EquipmentPage'
 import HospitalDetailPage from './pages/staff/HospitalDetailPage'
 import HospitalFormPage from './pages/staff/HospitalFormPage'
 import HospitalsPage from './pages/staff/HospitalsPage'
@@ -24,6 +25,7 @@ export function AppRoutes() {
       <Route path="/staff" element={<StaffLayout />}>
         <Route index element={<OverviewPage />} />
         <Route path="beds" element={<BedsPage />} />
+        <Route path="equipment" element={<EquipmentPage />} />
         <Route path="blood" element={<BloodPage />} />
         <Route path="pharmacy" element={<PharmacyPage />} />
         <Route path="hospitals" element={<HospitalsPage />} />

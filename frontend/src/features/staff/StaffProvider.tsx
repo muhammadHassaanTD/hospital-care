@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getMe, logout, type User } from '../../api/auth'
 import { getBedBoard, postBedAction, type BedAction, type BedBoard } from '../../api/beds'
 import { getBloodUnits, type BloodUnit } from '../../api/blood'
+import { getEquipment, postEquipmentAction, type Equipment, type EquipmentAction } from '../../api/equipment'
 import { ApiError } from '../../api/client'
 import { getMedicines } from '../../api/pharmacy'
 import { getPublicStatus } from '../../api/publicStatus'
@@ -75,12 +76,13 @@ function StaffSession({ user, children }: { user: User; children: ReactNode }) {
       canSee(role, 'beds') ? getBedBoard() : NO_BEDS,
       canSee(role, 'blood') ? getBloodUnits() : [],
       canSee(role, 'pharmacy') ? getMedicines() : [],
+      canSee(role, 'equipment') ? getEquipment() : [],
       getPublicStatus()
         .then((status) => status.emergency)
         .catch(() => null),
     ])
-      .then(([board, units, medicines, emergency]) => {
-        if (active) setData({ ...board, units, medicines, emergency })
+      .then(([board, units, medicines, equipment, emergency]) => {
+        if (active) setData({ ...board, units, medicines, equipment, emergency })
       })
       .catch(() => active && setFailed(true))
     return () => {
@@ -124,14 +126,48 @@ function StaffSession({ user, children }: { user: User; children: ReactNode }) {
     setData((current) => current && { ...current, units: [...current.units, unit] })
   }, [])
 
+  const addEquipment = useCallback((item: Equipment) => {
+    setData((current) => current && { ...current, equipment: [...current.equipment, item] })
+  }, [])
+
+  const updateEquipment = useCallback(
+    async (id: string, action: EquipmentAction): Promise<BedActionResult> => {
+      try {
+        const saved = await postEquipmentAction(id, action)
+        setData(
+          (current) =>
+            current && { ...current, equipment: current.equipment.map((item) => (item.id === saved.id ? saved : item)) },
+        )
+        return { ok: true }
+      } catch (error) {
+        const status = error instanceof ApiError ? error.status : 0
+        if (status === 409) {
+          const equipment = await getEquipment().catch(() => null)
+          if (equipment) setData((current) => current && { ...current, equipment })
+          return { ok: false, message: 'Someone else changed this machine first. The list now shows its latest state.' }
+        }
+        if (status === 403) {
+          const me = await getMe().catch(() => user)
+          if (!me) {
+            navigate(`/login?next=${encodeURIComponent(pathname)}`)
+            return { ok: false, message: 'Your sign-in has ended. Sign in again to continue.' }
+          }
+          return { ok: false, message: 'Your role can’t change equipment status.' }
+        }
+        return { ok: false, message: 'The hospital’s system didn’t respond, so the status wasn’t changed. Try again.' }
+      }
+    },
+    [navigate, pathname, user],
+  )
+
   const attention = useMemo(
     () => (data ? buildAttention(data, now).filter((item) => canSee(role, item.module)) : []),
     [data, now, role],
   )
 
   const value = useMemo<StaffState>(
-    () => ({ user, role, now, data, failed, attention, updateBed, addUnit, signOut }),
-    [user, role, now, data, failed, attention, updateBed, addUnit, signOut],
+    () => ({ user, role, now, data, failed, attention, updateBed, addUnit, addEquipment, updateEquipment, signOut }),
+    [user, role, now, data, failed, attention, updateBed, addUnit, addEquipment, updateEquipment, signOut],
   )
 
   return <StaffContext.Provider value={value}>{children}</StaffContext.Provider>

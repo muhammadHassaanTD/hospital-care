@@ -35,6 +35,8 @@ reading needs *view*, changing needs *edit*. No access → 403.
 | POST | `/beds/<bed id>/actions/` | `{action}` → updated `Bed` | beds: edit |
 | GET | `/blood/units/` | `BloodUnit[]` | blood: view |
 | GET | `/pharmacy/stock/` | `Medicine[]` with `batches` | pharmacy: view |
+| GET | `/equipment/` | `Equipment[]` | equipment: view |
+| POST | `/equipment/` | `{id, type, locationId}` → `Equipment` | equipment: edit |
 
 Bed actions: `discharge`, `markReady`, `reserve`, `cancelReservation`, `outOfService`, `returnToService`.
 A move the bed lifecycle doesn't allow (e.g. reserving an occupied bed) returns **409** and changes nothing.
@@ -42,6 +44,29 @@ Unknown action → 400, unknown bed → 404. Discharging clears the patient deta
 
 A blood unit past its expiry date is reported as `expired` (unless already `issued`), even if nobody has
 updated its stored status yet.
+
+## Equipment (Sprint 4)
+
+`GET /equipment/` and `POST /equipment/` need **equipment: view** to read and **equipment: edit** to register
+(admin and nurse edit, doctor view). A user with a hospital only sees that hospital’s machines.
+
+```ts
+Equipment = {
+  id: string,  // asset identifier, e.g. VENT-04
+  type: 'ventilator' | 'monitor' | 'defibrillator' | 'dialysis',
+  location: string, locationId: number,
+  status: 'available' | 'inUse' | 'maintenance' | 'outOfService'
+}
+```
+
+`POST` body is `{id, type, locationId}`. The server sets `available`. `locationId` must be a storage location at
+the caller’s hospital (400 otherwise, including when the account has no hospital). A duplicate identifier,
+ignoring case, is 400. Optional list filters: `?type=` and `?status=` (unknown values are ignored).
+`?forMatching=1` returns only `available` machines: maintenance is left out, and so are in use and out of service.
+
+`POST /equipment/<id>/actions/` body `{action}` needs **equipment: edit**. Actions: `startUse`, `finishUse`,
+`startMaintenance`, `finishMaintenance`, `outOfService`. A move the lifecycle refuses is **409**. Another
+hospital’s machine is **403**. Unknown id is **404**. Unknown action is **400**.
 
 ## Demo data
 
@@ -51,6 +76,7 @@ docker compose exec backend python manage.py seed_demo --reset  # start the demo
 ```
 
 Creates 3 hospitals (CityCare General, Seaview, Northside Children's) with 10 departments, 12 wards / 164 beds
-(ICU, emergency, general, isolation and NICU) and 10 storage locations, plus 320 blood units, 23 medicines, 14 doctor shifts, the ER status, and one login per
+(ICU, emergency, general, isolation and NICU), 13 storage locations and 12 machines (ventilators, monitors,
+defibrillators and dialysis at CityCare), plus 320 blood units, 23 medicines, 14 doctor shifts, the ER status, and one login per
 role (`admin@`, `doctor@`, `nurse@`, `bloodbank@`, `pharmacist@`, `patient@demo.citycare.pk`, password
 `CityCare-demo-1`). Demo only: never run it against real data.

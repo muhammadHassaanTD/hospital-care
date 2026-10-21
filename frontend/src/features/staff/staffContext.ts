@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react'
 import type { User } from '../../api/auth'
 import type { Bed, BedAction, Ward } from '../../api/beds'
 import type { BloodUnit } from '../../api/blood'
+import type { Equipment, EquipmentAction } from '../../api/equipment'
 import type { Medicine } from '../../api/pharmacy'
 import type { PublicStatus } from '../../api/publicStatus'
 import type { AttentionItem } from './attention'
@@ -13,6 +14,7 @@ export interface StaffData {
   beds: Bed[]
   units: BloodUnit[]
   medicines: Medicine[]
+  equipment: Equipment[]
   /** null if the public ER status couldn't be loaded; the rest of the workspace still works. */
   emergency: PublicStatus['emergency'] | null
 }
@@ -32,6 +34,10 @@ export interface StaffState {
   updateBed: (bedId: string, action: BedAction) => Promise<BedActionResult>
   /** Adds a newly registered unit to the loaded data, so the blood page shows it without a refetch. */
   addUnit: (unit: BloodUnit) => void
+  /** Adds a newly registered machine to the loaded data, so the equipment page shows it without a refetch. */
+  addEquipment: (item: Equipment) => void
+  /** Saves an equipment status change on the server, then shows the machine as saved. */
+  updateEquipment: (id: string, action: EquipmentAction) => Promise<BedActionResult>
   signOut: () => Promise<void>
 }
 

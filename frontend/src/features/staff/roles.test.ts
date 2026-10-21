@@ -3,23 +3,24 @@ import { canEdit, canSee, moduleForPath, MODULES, ROLES, type Module, type Role 
 
 // The access table from the design spec: v = view only, e = edit, - = no access.
 const TABLE: Record<Role, Record<Module, 'v' | 'e' | '-'>> = {
-  admin: { overview: 'v', beds: 'e', blood: 'e', pharmacy: 'e', hospitals: 'e', users: 'e' },
-  doctor: { overview: 'v', beds: 'v', blood: 'v', pharmacy: 'v', hospitals: 'v', users: '-' },
-  nurse: { overview: 'v', beds: 'e', blood: '-', pharmacy: 'v', hospitals: 'v', users: '-' },
-  bloodBank: { overview: 'v', beds: '-', blood: 'e', pharmacy: '-', hospitals: 'v', users: '-' },
-  pharmacist: { overview: 'v', beds: '-', blood: '-', pharmacy: 'e', hospitals: 'v', users: '-' },
+  admin: { overview: 'v', beds: 'e', equipment: 'e', blood: 'e', pharmacy: 'e', hospitals: 'e', users: 'e' },
+  doctor: { overview: 'v', beds: 'v', equipment: 'v', blood: 'v', pharmacy: 'v', hospitals: 'v', users: '-' },
+  nurse: { overview: 'v', beds: 'e', equipment: 'e', blood: '-', pharmacy: 'v', hospitals: 'v', users: '-' },
+  bloodBank: { overview: 'v', beds: '-', equipment: '-', blood: 'e', pharmacy: '-', hospitals: 'v', users: '-' },
+  pharmacist: { overview: 'v', beds: '-', equipment: '-', blood: '-', pharmacy: 'e', hospitals: 'v', users: '-' },
 }
 
 describe('roles', () => {
   it('lists every role and module', () => {
     expect(ROLES.map((r) => r.id)).toEqual(Object.keys(TABLE))
-    expect(MODULES.map((m) => m.id)).toEqual(['overview', 'beds', 'blood', 'pharmacy', 'hospitals', 'users'])
+    expect(MODULES.map((m) => m.id)).toEqual(['overview', 'beds', 'equipment', 'blood', 'pharmacy', 'hospitals', 'users'])
   })
 
   it.each([
     ['/staff', 'overview'],
     ['/staff/', 'overview'],
     ['/staff/beds', 'beds'],
+    ['/staff/equipment', 'equipment'],
     ['/staff/hospitals/3/edit', 'hospitals'],
     ['/staff/users', 'users'],
     ['/staff/hospitalsx', 'overview'],

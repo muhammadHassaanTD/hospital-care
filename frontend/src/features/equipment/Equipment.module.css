@@ -1,0 +1,103 @@
+.note {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.filters {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table th {
+  text-align: left;
+  color: var(--ink-muted);
+  border-bottom: 2px solid var(--rule);
+  padding: var(--space-2) var(--space-3) var(--space-2) 0;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-2) var(--space-3) var(--space-2) 0;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.more {
+  justify-self: start;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 32rem;
+}
+
+.form select {
+  justify-self: start;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  border: 2px solid var(--rule);
+  border-radius: var(--radius);
+  font-size: var(--text-base);
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.formActions > button {
+  width: auto;
+}
+
+.back {
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  white-space: normal;
+}
+
+.action {
+  min-height: 2.25rem;
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  border: 2px solid var(--rule);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action:hover {
+  border-color: var(--ink-muted);
+}
+
+.action:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
